@@ -6,6 +6,11 @@ import math
 from PIL import Image
 import itertools
 import time
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
+
+Tk().withdraw()
+filename = askopenfilename(title="Open Image", filetypes=[("Image Files",".png .jpg")])
 
 bind = Controller()
 
@@ -24,15 +29,15 @@ outstring = ""
 def on_press(key):
     if key == key.ctrl:
         holdingctrl = True
-    elif key == key.k:
+    elif key.char == "k":
         if holdingctrl:
             textboxpos = bind.position
             print("Set textbox position!")
-    elif key == key.l:
+    elif key.char == "l":
         if holdingctrl:
             donebuttonpos = bind.position
             print("Set done button position!")
-    elif key == key.p:
+    elif key.char == "p":
         if canstart:
             canstart = False
             for indx, lst in enumerate(outputlist):
@@ -64,8 +69,8 @@ listener = Listener(
     on_release=on_release)
 listener.start()
 
-im = Image.open("test.png")
-newsize = (1000, 1000)
+im = Image.open(filename)
+newsize = (400, 400)
 im = im.resize(newsize)
 
 im = np.asarray(im)
@@ -150,6 +155,9 @@ colors = list(totalcolors.keys())
 
 # Create color container 
 ## It has same dimensions as image (1000,1000,number of colors,3)
+
+print("Starting...")
+
 colors_container = np.ones(shape=[image.shape[0],image.shape[1],len(colors),3])
 for i,color in enumerate(colors):
     colors_container[:,:,i,:] = color
