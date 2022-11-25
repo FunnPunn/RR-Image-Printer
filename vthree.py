@@ -72,17 +72,7 @@ listener = Listener(
 listener.start()
 
 im = Image.open(filename)
-newsize = (500, 500)
-print(im.size)
-im = im.resize(newsize)
-
 im = np.asarray(im)
-print(im.shape[0])
-print(im.shape[1])
-print(im.shape[2])
-
-new_shape = (im.shape[0],im.shape[1],1,3)
-image = im.reshape(new_shape)  
 
 totalcolors ={
     (224, 83, 80)  :"$",
@@ -158,38 +148,40 @@ totalcolors ={
 
 colors = list(totalcolors.keys())
 
-print("Starting...")
+try:
+    # for all colors (256*256*256) assign color from palette
+    precalculated = np.load('view.npz')['color_cube']
+except:
+    precalculated = np.zeros(shape=[256,256,256,3])
+    for i in range(256):
+        print('processing',100*i/256)
+        for j in range(256):
+            for k in range(256):
+                index = np.argmin(np.sqrt(np.sum(((colors)-np.array([i,j,k]))**2,axis=1)))
+                precalculated[i,j,k] = colors[index]
+    np.savez_compressed('view', color_cube = precalculated)
+        
 
-colors_container = np.ones(shape=[image.shape[0],image.shape[1],len(colors),3])
-for i,color in enumerate(colors):
-    colors_container[:,:,i,:] = color
+# Processing part
+#### Step 1: Take precalculated color cube for defined palette and 
 
+def get_view(color_cube,image):
+    shape = image.shape[0:2]
+    indices = image.reshape(-1,3)
+    # pass image colors and retrieve corresponding palette color
+    new_image = color_cube[indices[:,0],indices[:,1],indices[:,2]]
+   
+    return new_image.reshape(shape[0],shape[1],3).astype(np.uint8)
 
-
-def closest(image,color_container):
-    shape = image.shape[:2]
-    total_shape = shape[0]*shape[1]
-
-    # calculate distances
-    ### shape =  (x,y,number of colors)
-    distances = np.sqrt(np.sum((color_container-image)**2,axis=3))
-
-    min_index = np.argmin(distances,axis=2).reshape(-1)
-    natural_index = np.arange(total_shape)
-
-    reshaped_container = colors_container.reshape(-1,len(colors),3)
-
-    color_view = reshaped_container[natural_index,min_index].reshape(shape[0],shape[1],3)
-    return color_view
-
-# NOTE: Dont pass uint8 due to overflow during subtract
-result_image = closest(image,colors_container)
-
-Image.fromarray(result_image.astype(np.uint8)).save("out.png")
+start = time.time()
+result = get_view(precalculated,im)
+print('Image processing: ',time.time()-start)
+Image.fromarray(result).save("out.png")
 
 input("Finished coloring! Press enter to convert to string!")
 
-i = Image.fromarray(result_image.astype(np.uint8))
+
+
 pixels = i.load()
 width, height = i.size
 
