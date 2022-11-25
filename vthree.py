@@ -10,7 +10,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 Tk().withdraw()
-filename = askopenfilename(title="Open Image", filetypes=[("Image Files",".png .jpg")])
+filename = askopenfilename(title="Open Image", filetypes=[("Image Files",".png .jpg .jpeg")])
 
 bind = Controller()
 
@@ -18,6 +18,7 @@ bind = Controller()
 actiondelay = 0.1
 textboxpos = (0, 0)
 donebuttonpos = (0, 0)
+debugmode = True #Debug mode doesn't have the automatic printing
 #END OF SETUP
 
 holdingctrl = False
@@ -72,7 +73,12 @@ listener = Listener(
 listener.start()
 
 im = Image.open(filename)
+im = im.convert("RGB")
+im.save(filename)
+
 im = np.asarray(im)
+
+print("Processing image... (This might take a while)")
 
 totalcolors ={
     (224, 83, 80)  :"$",
@@ -152,6 +158,7 @@ try:
     # for all colors (256*256*256) assign color from palette
     precalculated = np.load('view.npz')['color_cube']
 except:
+    print("view.npz not found. Building a new one...")
     precalculated = np.zeros(shape=[256,256,256,3])
     for i in range(256):
         print('processing',100*i/256)
@@ -173,17 +180,16 @@ def get_view(color_cube,image):
    
     return new_image.reshape(shape[0],shape[1],3).astype(np.uint8)
 
+
 start = time.time()
 result = get_view(precalculated,im)
-print('Image processing: ',time.time()-start)
-Image.fromarray(result).save("out.png")
+print('Image processed! Generating strings...')
+product = Image.fromarray(result)
 
-input("Finished coloring! Press enter to convert to string!")
+product.save("out.jpg")
 
-
-
-pixels = i.load()
-width, height = i.size
+pixels = product.load()
+width, height = product.size
 
 all_pixels = []
 pixels_x = []
@@ -220,4 +226,6 @@ while len(outstring) > 1:
     outstring = outstring[280:]
 
 print("Press CTRL + K to set mouse position for textbox\nPress CTRL + L to set mouse position for done button\nPress CTRL + P to start (must be on rec room screen)")
-input("Press enter to CANCEL")
+input("Press enter to CANCEL (If debug mode is on, it will output all strings)")
+if debugmode:
+    print(outputlist)
