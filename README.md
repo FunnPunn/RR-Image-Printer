@@ -1,1 +1,4 @@
-Version 3 is the one that should work!
+# Funn's Image Printer Software!
+## A tool made for my printer invention!
+
+pls no steal :(
